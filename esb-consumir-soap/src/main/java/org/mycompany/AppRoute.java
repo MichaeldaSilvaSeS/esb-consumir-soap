@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,8 +25,9 @@ public class AppRoute extends RouteBuilder{
 		restConfiguration()
 			.port(8500)
 			.enableCORS(true)
-			.apiContextPath("/api")
-			.componentProperty("prettyPrint", "true");
+			.contextPath("/api")
+			.dataFormatProperty("prettyPrint", "true")
+			.bindingMode(RestBindingMode.json);
 		
 		rest()
 			.get("/callsoap")
@@ -37,7 +39,13 @@ public class AppRoute extends RouteBuilder{
 				.produces("text/plain")
 				.type(SimpleInDto.class)
 				.outType(SimpleOutDto.class)
-			.to("direct:callbean");
+			.to("direct:callbean")
+			.post("/read")
+				.consumes("application/json")
+				.produces("text/plain")
+				.type(SimpleInDto.class)
+				.outType(SimpleOutDto.class)
+			.to("direct:readbean");
 		
 		from("direct:callsoap")
 			.setBody(constant(Arrays.<Integer>asList(1,2)))
@@ -49,12 +57,15 @@ public class AppRoute extends RouteBuilder{
 			.log("${body[0]}")
 			.choice()
 				.when()
-					.jsonpath("?($.nome == 'Michael')")
+					.simple("${in.body.nome} == 'Michael'")
 						.setHeader(Exchange.HTTP_RESPONSE_CODE,constant(500))
 						.transform(simple("erro"))
 					.otherwise()
 						.bean(SimpleBean.class,"processar(${header.id})")
 						.transform(simple("ok"));
+		
+		from("direct:readbean")
+			.bean(ReadBean.class,"read");
 	}
 
 }
