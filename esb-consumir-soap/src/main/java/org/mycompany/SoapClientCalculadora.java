@@ -19,4 +19,9 @@ public class SoapClientCalculadora {
 	public Integer sum(List<Integer> nums) {
 		return this.calculator.add(nums.get(0), nums.get(1));
 	}
+	
+	public Integer pow(Integer num) {
+		System.out.println("Chamou pow " + num);
+		return this.calculator.multiply(num, num);
+	}
 }
